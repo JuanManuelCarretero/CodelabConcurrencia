@@ -1,9 +1,9 @@
 // Ejercicio 1 - Hilo básico (starter)
 public class Main {
     public static void main(String[] args) {
-        // TODO: Crear una tarea Runnable que imprima del 1 al 5
+        // TODO Actividad1:  Crear una tarea Runnable que imprima del 1 al 5
         // con una pausa de 150 ms entre números.
-        // TODO: Crear DOS hilos que ejecuten esa misma tarea y asignarles nombres diferentes.
+        // TODO Actividad2: Crear DOS hilos que ejecuten esa misma tarea y asignarles nombres diferentes.
         // TODO: Iniciar ambos hilos.
 
         // Ejemplo parcial para guiar (no eliminar, completar lo que falta):

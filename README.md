@@ -21,7 +21,7 @@
 
 ---
 
-# EJERCICIOS (concepto + pasos detallados para el alumno)
+# EJERCICIOS (concepto + pasos detallados)
 
 ---
 
@@ -39,16 +39,19 @@ Crear dos hilos que ejecuten la misma tarea y observar cómo sus salidas se inte
 
 **Archivo base:** `ejercicio-1-basico/Main.java` (contiene `// TODO:`)
 
-**Pasos para el alumno (hacer en el archivo base):**
+**Pasos**
 1. Localiza el bloque `Runnable tarea = () -> { ... };` que ya imprime números del 1 al 5.  
 2. **TODO 1:** Crea dos objetos `Thread` llamados `t1` y `t2` usando esa `tarea`. Asigna nombres distintos con `new Thread(tarea, "Hilo-A")` y `new Thread(tarea, "Hilo-B")`.  
+   ```java
+   Thread t1 = new Thread(tarea, "Hilo-A");
+   Thread t2 = new Thread(tarea, "Hilo-B");
+   ```
+
 3. **TODO 2:** Arranca ambos hilos con `t1.start(); t2.start();`.  
    
    Ejemplo de código a añadir en `ejercicio-1-basico/Main.java` (completa las líneas TODO):
 
    ```java
-   Thread t1 = new Thread(tarea, "Hilo-A");
-   Thread t2 = new Thread(tarea, "Hilo-B");
 
    t1.start();
    t2.start();
@@ -68,9 +71,9 @@ Crear dos hilos que ejecuten la misma tarea y observar cómo sus salidas se inte
 - Si llamas a `tarea.run()` en vez de `t1.start()`, la ejecución será secuencial (en el hilo principal).  
 - `Thread.sleep` lanza `InterruptedException`: envuélvelo en `try/catch` dentro del `Runnable`.
 
-**Preguntas para reflexionar (checkpoint):**
-- ¿Por qué las salidas se intercalan?  
-- ¿Cómo cambiaría el comportamiento si `sleep` fuera más largo en uno de los hilos?
+**Preguntas para reflexionar y razonar (checkpoint):**
+- ¿Por qué las salidas se intercalan?  ¿Cual puede ser el motivo?
+- ¿Cómo cambiaría el comportamiento si `sleep` fuera más largo en uno de los hilos? Probar y ver diferencias
 
 ---
 
@@ -85,17 +88,19 @@ Reproducir la condición de carrera usando un contador compartido incrementado p
 
 **Archivo base:** `ejercicio-2-condicion-carrera/Main.java`
 
-**Pasos para el alumno (hacer en el archivo base):**
+**Pasos**
 1. Observa la clase `Contador` con `int count = 0` y `void incrementar() { count++; }`. Esta implementación está intencionadamente sin proteger.  
 2. **TODO 1:** Crea una `Runnable` que llame `c.incrementar()` 1000 veces (por ejemplo con un bucle `for (int i = 0; i < 1000; i++) c.incrementar();`).  
+```java
+   Runnable tarea = () -> {
+      for (int i = 0; i < 1000; i++) c.incrementar();
+   };
+   ```
 3. **TODO 2:** Crea y arranca dos hilos `t1` y `t2` que ejecuten esa `Runnable`. Usa `t1.join()` y `t2.join()` para esperar su fin.  
    
    Ejemplo de código a añadir en `ejercicio-2-condicion-carrera/Main.java` (completa las líneas TODO):
 
    ```java
-   Runnable tarea = () -> {
-      for (int i = 0; i < 1000; i++) c.incrementar();
-   };
 
    Thread t1 = new Thread(tarea, "Hilo-1");
    Thread t2 = new Thread(tarea, "Hilo-2");
@@ -118,7 +123,7 @@ Reproducir la condición de carrera usando un contador compartido incrementado p
 - Explica por qué el resultado es menor que 2000.  
 - ¿Qué parte de la operación `count++` causa la pérdida?
 
-**Pequeño reto:** implementa un registro temporal dentro de `incrementar()` que imprima la lectura y la escritura (solo para entender el interleaving — ten cuidado con el gran volumen de salida).
+**Pequeño reto extra:** implementa un registro temporal dentro de `incrementar()` que imprima la lectura y la escritura (solo para entender el interleaving — ten cuidado con el gran volumen de salida).
 
 ---
 
@@ -134,7 +139,7 @@ Usar `synchronized` para proteger el contador y eliminar la condición de carrer
 
 **Archivo base:** `ejercicio-3-synchronized/Main.java`
 
-**Pasos para el alumno (hacer en el archivo base):**
+**Pasos:**
 1. Localiza la clase `ContadorSeguro` con `void incrementar()`.  
 2. **TODO 1:** Protege el método utilizando `synchronized`:
    ```java
@@ -172,9 +177,9 @@ Usar `synchronized` para proteger el contador y eliminar la condición de carrer
 - Si sincronizas en objetos distintos (por ejemplo `synchronized (new Object())` dentro del método), no protegerás el recurso — todos los hilos usarán monitores diferentes. Asegúrate de sincronizar sobre el **mismo** objeto (por ejemplo el propio `this` o el objeto `ContadorSeguro` compartido).
 
 **Checkpoint / discusión:**
-- ¿Qué coste tiene proteger con `synchronized`? ¿Qué pasa si el método hace mucho trabajo dentro del bloque sincronizado? (habla de granularidad de la sincronización).
+- ¿Qué coste tiene proteger con `synchronized`? ¿Qué pasa si el método hace mucho trabajo dentro del bloque sincronizado? 
 
-**Reto opcional:** reescribe la solución usando `java.util.concurrent.atomic.AtomicInteger` y compara la simplicidad y el rendimiento.
+**Reto opcional extra:** reescribe la solución usando `java.util.concurrent.atomic.AtomicInteger` y compara la simplicidad y el rendimiento.
 
 ---
 
@@ -191,7 +196,7 @@ Implementar un buffer limitado (cola) y coordinar la producción/consumo con `wa
 
 **Archivo base:** `ejercicio-4-productor-consumidor/Main.java` (incluye `Buffer` con métodos TODO)
 
-**Pasos para el alumno (hacer en el archivo base):**
+**Pasos a seguir**
 1. Abre la clase `Buffer` y observa `Queue<Integer> queue` y `int capacidad = 5`.  
 2. **TODO 1 — Producir:** Implementa `public synchronized void producir(int valor) throws InterruptedException` así:
    - Mientras la cola esté llena (`while (queue.size() == capacidad) wait();`) espera.  
@@ -237,13 +242,9 @@ Implementar un buffer limitado (cola) y coordinar la producción/consumo con `wa
 ---
 
 ## Entrega y verificación
-- Cada alumno debe subir un ZIP con los `Main.java` completados o entregar un enlace al repositorio con commits claros.  
+- Cada alumno debe subir un ZIP con los `Main.java` completados y el analisis de las preguntas con vuestras palabras de como funciona cada código (como lo haceis paso a paso y con el código del codelab o vuestro propio, quiero que me expliqueis con vuestras palabras como funciona)
 - Añadir un archivo `respuestas.md` con las respuestas a los checkpoints y capturas de salida (o pegar la salida de terminal).
 
 ---
 
-## Opciones adicionales que puedo preparar (elige una)
-1. Añadir **pistas inline** en cada starter (`// PISTA:`) sin dar la solución completa.  
-2. Generar una **rúbrica de evaluación** en Markdown para imprimir o usar en la plataforma del centro.  
 
-Dime 1 o 2 (o ninguna) y lo preparo inmediatamente.
