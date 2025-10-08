@@ -1,15 +1,14 @@
 # Codelab Hilos en Java (FP DAM)
 
-**Público objetivo:** Alumnado de FP DAM con conocimientos básicos de Java (clases, métodos, bucles).
 
 **Objetivo del codelab:** Aprender, paso a paso, los conceptos prácticos de concurrencia en Java: creación de hilos, condiciones de carrera, sincronización con `synchronized`, comunicación entre hilos con `wait()`/`notifyAll()`, y alternativas de la API `java.util.concurrent` (por ejemplo `BlockingQueue` y `AtomicInteger`).
 
 ---
 
 ## Antes de empezar (requisitos)
-- Java JDK 11 o superior instalado. (`java -version`, `javac -version`)
-- IDE recomendado: IntelliJ IDEA (Community) o VS Code con extensión Java.
-- Conocimientos previos: clases, métodos, bucles (`for`, `while`), excepciones básicas.
+- Java JDK 11 o superior instalado. Podeis mirar la versión de Java en vuestro IDE o con el CMD (`java -version`, `javac -version`)
+- IDE recomendado: IntelliJ IDEA (Community), VS Code con extensión Java o Netbeans.
+- Conocimientos previos útiles: clases, métodos, bucles (`for`, `while`), excepciones básicas.
 
 ---
 
@@ -44,6 +43,16 @@ Crear dos hilos que ejecuten la misma tarea y observar cómo sus salidas se inte
 1. Localiza el bloque `Runnable tarea = () -> { ... };` que ya imprime números del 1 al 5.  
 2. **TODO 1:** Crea dos objetos `Thread` llamados `t1` y `t2` usando esa `tarea`. Asigna nombres distintos con `new Thread(tarea, "Hilo-A")` y `new Thread(tarea, "Hilo-B")`.  
 3. **TODO 2:** Arranca ambos hilos con `t1.start(); t2.start();`.  
+   
+   Ejemplo de código a añadir en `ejercicio-1-basico/Main.java` (completa las líneas TODO):
+
+   ```java
+   Thread t1 = new Thread(tarea, "Hilo-A");
+   Thread t2 = new Thread(tarea, "Hilo-B");
+
+   t1.start();
+   t2.start();
+   ```
 4. Ejecuta la clase `Main`. Ejecuta varias veces (3–5) y observa la salida: debería mostrar líneas de ambos hilos mezcladas, por ejemplo:
    ```
    Hilo-A: 1
@@ -80,6 +89,25 @@ Reproducir la condición de carrera usando un contador compartido incrementado p
 1. Observa la clase `Contador` con `int count = 0` y `void incrementar() { count++; }`. Esta implementación está intencionadamente sin proteger.  
 2. **TODO 1:** Crea una `Runnable` que llame `c.incrementar()` 1000 veces (por ejemplo con un bucle `for (int i = 0; i < 1000; i++) c.incrementar();`).  
 3. **TODO 2:** Crea y arranca dos hilos `t1` y `t2` que ejecuten esa `Runnable`. Usa `t1.join()` y `t2.join()` para esperar su fin.  
+   
+   Ejemplo de código a añadir en `ejercicio-2-condicion-carrera/Main.java` (completa las líneas TODO):
+
+   ```java
+   Runnable tarea = () -> {
+      for (int i = 0; i < 1000; i++) c.incrementar();
+   };
+
+   Thread t1 = new Thread(tarea, "Hilo-1");
+   Thread t2 = new Thread(tarea, "Hilo-2");
+
+   t1.start();
+   t2.start();
+
+   t1.join();
+   t2.join();
+
+   System.out.println("Valor final (esperado 2000): " + c.count);
+   ```
 4. Ejecuta el programa **variadas veces** (10 ejecuciones seguidas) y apunta los valores finales mostrados. Probablemente verás valores distintos y con frecuencia menores de `2000`.  
 5. (Opcional) Incrementa las iteraciones a `100_000` y vuelve a ejecutar para ver cómo la probabilidad y el efecto cambian.
 
@@ -116,6 +144,28 @@ Usar `synchronized` para proteger el contador y eliminar la condición de carrer
    ```
    (o alternativamente usa `synchronized(this)` dentro del método).  
 3. **TODO 2:** En `main`, crea la `Runnable` y lanza dos hilos que ejecuten 1000 incrementos cada uno, exactamente como en el ejercicio 2. Usa `join()` para esperar.  
+   
+   Ejemplo de código a añadir en `ejercicio-3-synchronized/Main.java` (completa las líneas TODO):
+
+   ```java
+   // en la clase ContadorSeguro
+   synchronized void incrementar() {
+      count++;
+   }
+
+   // en main
+   Runnable tarea = () -> {
+      for (int i = 0; i < 1000; i++) c.incrementar();
+   };
+
+   Thread t1 = new Thread(tarea, "Hilo-1");
+   Thread t2 = new Thread(tarea, "Hilo-2");
+
+   t1.start(); t2.start();
+   t1.join(); t2.join();
+
+   System.out.println("Valor final seguro (esperado 2000): " + c.count);
+   ```
 4. Ejecuta repetidamente; el resultado debería ser siempre `2000`.
 
 **Pistas / errores comunes:**
@@ -150,6 +200,29 @@ Implementar un buffer limitado (cola) y coordinar la producción/consumo con `wa
 3. **TODO 2 — Consumir:** Implementa `public synchronized int consumir() throws InterruptedException` así:
    - Mientras la cola esté vacía (`while (queue.isEmpty()) wait();`) espera.  
    - Extrae un valor (`int v = queue.remove();`), imprime `Consumido: v` y `notifyAll()`. Devuelve `v`.  
+   
+   Ejemplo de código a añadir en `ejercicio-4-productor-consumidor/Main.java` (completa las líneas TODO):
+
+   ```java
+   public synchronized void producir(int valor) throws InterruptedException {
+       while (queue.size() == capacidad) wait();
+       queue.add(valor);
+       System.out.println("Producido: " + valor);
+       notifyAll();
+   }
+
+   public synchronized int consumir() throws InterruptedException {
+       while (queue.isEmpty()) wait();
+       int valor = queue.remove();
+       System.out.println("Consumido: " + valor);
+       notifyAll();
+       return valor;
+   }
+
+   // en main: arrancar hilos
+   productor.start();
+   consumidor.start();
+   ```
 4. En el `main` ya hay `Thread productor` y `Thread consumidor` creados; **TODO 3:** arranca ambos `productor.start(); consumidor.start();`.  
 5. Ejecuta el programa y observa la secuencia de `Producido:` y `Consumido:`. Cambia `capacidad` a `1` y vuelve a ejecutar para observar el efecto de bloqueo.  
 6. Reto opcional: añade **dos productores** y **dos consumidores** y verifica que la implementación sigue siendo correcta.
